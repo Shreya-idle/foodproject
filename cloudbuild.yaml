@@ -1,0 +1,43 @@
+steps:
+  # 1. Build the container image using the Dockerfile
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/foodproject/foodproject:latest'
+      - '--build-arg'
+      - 'VITE_SUPABASE_URL=$_VITE_SUPABASE_URL'
+      - '--build-arg'
+      - 'VITE_SUPABASE_ANON_KEY=$_VITE_SUPABASE_ANON_KEY'
+      - '.'
+
+  # 2. Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/foodproject/foodproject:latest'
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'foodproject'
+      - '--image'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/foodproject/foodproject:latest'
+      - '--region'
+      - 'asia-south1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/foodproject/foodproject:latest'
+
+substitutions:
+  _VITE_SUPABASE_URL: "https://jdybymbkrjmfyodikavc.supabase.co"
+  _VITE_SUPABASE_ANON_KEY: "sb_publishable_afGTeTVRG-609m7-Rg8QvQ_yGO8pfcW"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
